@@ -10,15 +10,15 @@ namespace lms_backend.Controllers
 {
     [ApiController]
     [Route("/api/[controller]")]
-    public class ClassroomController : Controller
+    public class TeacherController : Controller
     {
-        private readonly ILogger<ClassroomController> _logger;
+        private readonly ILogger<TeacherController> _logger;
         private IConfiguration _configuration;
         private MySqlConnection _connection;
         private Helper _helper = new Helper();
 
 
-        public ClassroomController(ILogger<ClassroomController> logger, IConfiguration configuration)
+        public TeacherController(ILogger<TeacherController> logger, IConfiguration configuration)
         {
             _logger = logger;
             _configuration = configuration;
@@ -30,7 +30,7 @@ namespace lms_backend.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            _logger.LogInformation("ClassroomController:Get All Classes");
+            _logger.LogInformation("TeacherController: Get All Teachers");
             try 
             { 
                 DataTable dataTable = new DataTable();
@@ -39,7 +39,7 @@ namespace lms_backend.Controllers
                 
                 using(_connection) {  
                     _connection.Open();       
-                    String query = "SELECT * FROM classrooms";
+                    String query = "SELECT * FROM teachers";
 
                     using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
                         mySqlDataReader = mySqlCommand.ExecuteReader();
@@ -54,7 +54,7 @@ namespace lms_backend.Controllers
             }
             catch (Exception e)
             {
-                 _logger.LogInformation("Exception: Get all Classrooms | "+ e.ToString());
+                 _logger.LogInformation("Exception: Get All Teachers | "+ e.ToString());
                 Console.WriteLine(e.ToString());
                 return BadRequest();
             }
@@ -63,7 +63,7 @@ namespace lms_backend.Controllers
         [HttpGet("{id}")]
         public IActionResult Get(string id)
         {
-            _logger.LogInformation("ClassroomController:Get class by ID");
+            _logger.LogInformation("TeacherController:Get Teacher by ID");
             try
             {
                 DataTable dataTable = new DataTable();
@@ -72,7 +72,7 @@ namespace lms_backend.Controllers
                 
                 using(_connection) {  
                     _connection.Open();       
-                    String query = "SELECT * FROM classrooms Where classroom_id = "+ id;
+                    String query = "SELECT * FROM teachers Where teacher_id = "+ id;
 
                     using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
                         mySqlDataReader = mySqlCommand.ExecuteReader();
@@ -88,30 +88,37 @@ namespace lms_backend.Controllers
             }
             catch (Exception e)
             {
-                 _logger.LogInformation("Exception: Get class by ID | "+ e.ToString());
+                 _logger.LogInformation("Exception: Get Teacher By ID | "+ e.ToString());
                 Console.WriteLine(e.ToString());
                 return BadRequest();
             }
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody] dynamic classroomData)
+        public IActionResult Post([FromBody] dynamic TeacherData)
         {
-            _logger.LogInformation("ClassroomController: Create Classroom");
+            _logger.LogInformation("TeacherController: Create Teacher");
             try
             {
                 DataTable dataTable = new DataTable();
                 string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-                string classroom_name = _helper.getJsonProperty("classroom_name", "String", classroomData);
-                // Console.WriteLine(classroom_name);
+                string first_name = _helper.getJsonProperty("first_name", "String", TeacherData);
+                string last_name = _helper.getJsonProperty("last_name", "String", TeacherData);
+                string contact_no = _helper.getJsonProperty("contact_no", "String", TeacherData);
+                string email = _helper.getJsonProperty("email", "String", TeacherData);
+                // Console.WriteLine(first_name);
                 
-                if(!string.IsNullOrWhiteSpace(classroom_name)){
+                if(!string.IsNullOrWhiteSpace(first_name) 
+                    && !string.IsNullOrWhiteSpace(last_name) 
+                    && !string.IsNullOrWhiteSpace(email)
+                    && !string.IsNullOrWhiteSpace(contact_no)
+                ){
                     using(_connection) {  
                         _connection.Open();       
                         String query = @$" 
-                            Insert Into classrooms(classroom_name)
-                            Values('{classroom_name}');
+                            Insert Into teachers(first_name, last_name, contact_no, email)
+                            Values('{first_name}', '{last_name}', '{contact_no}', '{email}');
                         ";
 
                         int rowsAffected = 0;
@@ -120,20 +127,20 @@ namespace lms_backend.Controllers
                         }
                         
                         if(rowsAffected > 0){
-                            _logger.LogInformation("ClassroomController: Classroom Created!");
+                            _logger.LogInformation("TeacherController: Teacher Created!");
                             // Console.WriteLine("Success!");
                             return Ok();
                         }else{
-                            _logger.LogInformation("ClassroomController: Can't Create Classroom");
+                            _logger.LogInformation("TeacherController: Can't Create Teacher");
                             return BadRequest();
                         }
                     }
                 }else{
-                    _logger.LogInformation("ClassroomController: Please Enter Classroom Name!");
+                    _logger.LogInformation("TeacherController: One or more data fields are missing!");
                     var problemDetails = new ProblemDetails
                     {
                         Title = "Error!",
-                        Detail = "Please Enter Classroom Name.",
+                        Detail = "One or more data fields are missing, Please Re check all data added.",
                         Status = 400
                     };
                     return BadRequest(problemDetails);
@@ -141,7 +148,7 @@ namespace lms_backend.Controllers
             }
             catch (Exception e)
             {
-                _logger.LogInformation("Exception: Create Classroom | "+ e.ToString());
+                _logger.LogInformation("Exception: Create Teacher | "+ e.ToString());
                 Console.WriteLine(e.ToString());
                 return BadRequest();
             }

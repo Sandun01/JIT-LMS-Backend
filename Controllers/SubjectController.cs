@@ -10,15 +10,15 @@ namespace lms_backend.Controllers
 {
     [ApiController]
     [Route("/api/[controller]")]
-    public class ClassroomController : Controller
+    public class SubjectController : Controller
     {
-        private readonly ILogger<ClassroomController> _logger;
+        private readonly ILogger<SubjectController> _logger;
         private IConfiguration _configuration;
         private MySqlConnection _connection;
         private Helper _helper = new Helper();
 
 
-        public ClassroomController(ILogger<ClassroomController> logger, IConfiguration configuration)
+        public SubjectController(ILogger<SubjectController> logger, IConfiguration configuration)
         {
             _logger = logger;
             _configuration = configuration;
@@ -30,7 +30,7 @@ namespace lms_backend.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            _logger.LogInformation("ClassroomController:Get All Classes");
+            _logger.LogInformation("SubjectController: Get All Subjects");
             try 
             { 
                 DataTable dataTable = new DataTable();
@@ -39,7 +39,7 @@ namespace lms_backend.Controllers
                 
                 using(_connection) {  
                     _connection.Open();       
-                    String query = "SELECT * FROM classrooms";
+                    String query = "SELECT * FROM subjects";
 
                     using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
                         mySqlDataReader = mySqlCommand.ExecuteReader();
@@ -54,7 +54,7 @@ namespace lms_backend.Controllers
             }
             catch (Exception e)
             {
-                 _logger.LogInformation("Exception: Get all Classrooms | "+ e.ToString());
+                 _logger.LogInformation("Exception: Get All Subjects | "+ e.ToString());
                 Console.WriteLine(e.ToString());
                 return BadRequest();
             }
@@ -63,7 +63,7 @@ namespace lms_backend.Controllers
         [HttpGet("{id}")]
         public IActionResult Get(string id)
         {
-            _logger.LogInformation("ClassroomController:Get class by ID");
+            _logger.LogInformation("SubjectController:Get Subject by ID");
             try
             {
                 DataTable dataTable = new DataTable();
@@ -72,7 +72,7 @@ namespace lms_backend.Controllers
                 
                 using(_connection) {  
                     _connection.Open();       
-                    String query = "SELECT * FROM classrooms Where classroom_id = "+ id;
+                    String query = "SELECT * FROM subjects Where subject_id = "+ id;
 
                     using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
                         mySqlDataReader = mySqlCommand.ExecuteReader();
@@ -88,30 +88,30 @@ namespace lms_backend.Controllers
             }
             catch (Exception e)
             {
-                 _logger.LogInformation("Exception: Get class by ID | "+ e.ToString());
+                 _logger.LogInformation("Exception: Get Subject By ID | "+ e.ToString());
                 Console.WriteLine(e.ToString());
                 return BadRequest();
             }
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody] dynamic classroomData)
+        public IActionResult Post([FromBody] dynamic SubjectData)
         {
-            _logger.LogInformation("ClassroomController: Create Classroom");
+            _logger.LogInformation("SubjectController: Create Subject");
             try
             {
                 DataTable dataTable = new DataTable();
                 string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-                string classroom_name = _helper.getJsonProperty("classroom_name", "String", classroomData);
-                // Console.WriteLine(classroom_name);
+                string subject_name = _helper.getJsonProperty("subject_name", "String", SubjectData);
+                // Console.WriteLine(subject_name);
                 
-                if(!string.IsNullOrWhiteSpace(classroom_name)){
+                if(!string.IsNullOrWhiteSpace(subject_name)){
                     using(_connection) {  
                         _connection.Open();       
                         String query = @$" 
-                            Insert Into classrooms(classroom_name)
-                            Values('{classroom_name}');
+                            Insert Into subjects(subject_name)
+                            Values('{subject_name}');
                         ";
 
                         int rowsAffected = 0;
@@ -120,20 +120,20 @@ namespace lms_backend.Controllers
                         }
                         
                         if(rowsAffected > 0){
-                            _logger.LogInformation("ClassroomController: Classroom Created!");
+                            _logger.LogInformation("SubjectController: Subject Created!");
                             // Console.WriteLine("Success!");
                             return Ok();
                         }else{
-                            _logger.LogInformation("ClassroomController: Can't Create Classroom");
+                            _logger.LogInformation("SubjectController: Can't Create Subject");
                             return BadRequest();
                         }
                     }
                 }else{
-                    _logger.LogInformation("ClassroomController: Please Enter Classroom Name!");
+                    _logger.LogInformation("SubjectController: Please Enter Subject Name!");
                     var problemDetails = new ProblemDetails
                     {
                         Title = "Error!",
-                        Detail = "Please Enter Classroom Name.",
+                        Detail = "Please Enter Subject Name!",
                         Status = 400
                     };
                     return BadRequest(problemDetails);
@@ -141,7 +141,7 @@ namespace lms_backend.Controllers
             }
             catch (Exception e)
             {
-                _logger.LogInformation("Exception: Create Classroom | "+ e.ToString());
+                _logger.LogInformation("Exception: Create Subject | "+ e.ToString());
                 Console.WriteLine(e.ToString());
                 return BadRequest();
             }

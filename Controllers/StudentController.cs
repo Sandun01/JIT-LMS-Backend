@@ -79,9 +79,17 @@ namespace lms_backend.Controllers
                     _connection.Open();       
 
                      String query = @$"
-                        SELECT * FROM students
+                        SELECT *, 
+                        GROUP_CONCAT(subjects.subject_name) AS subjects, 
+                        GROUP_CONCAT(DISTINCT CONCAT(teachers.first_name, ' ', teachers.last_name)) AS teachers
+                        FROM students
                         LEFT JOIN classrooms ON students.classroom_id = classrooms.classroom_id
-                        Where student_id = {id}
+                        INNER JOIN teacher_classroom ON teacher_classroom.classroom_id = classrooms.classroom_id
+                        INNER JOIN teacher_subject ON teacher_classroom.teacher_id = teacher_subject.teacher_id
+                        INNER JOIN subjects ON teacher_subject.subject_id = subjects.subject_id
+                        INNER JOIN teachers ON teacher_subject.teacher_id = teachers.teacher_id
+                        WHERE student_id = {id}
+                        GROUP BY students.student_id;
                     ";
 
                     using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){

@@ -39,7 +39,7 @@ namespace lms_backend.Controllers
                 
                 using(_connection) {  
                     _connection.Open();       
-                    String query = "SELECT * FROM classrooms";
+                    String query = "SELECT * FROM classrooms ORDER BY classroom_id DESC";
 
                     using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
                         mySqlDataReader = mySqlCommand.ExecuteReader();
@@ -142,6 +142,45 @@ namespace lms_backend.Controllers
             catch (Exception e)
             {
                 _logger.LogInformation("Exception: Create Classroom | "+ e.ToString());
+                Console.WriteLine(e.ToString());
+                return BadRequest();
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+             _logger.LogInformation("ClassroomController: Delete Classroom");
+            try
+            {
+                DataTable dataTable = new DataTable();
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                int classroom_id = id;
+                using(_connection) {  
+                    _connection.Open();       
+                    String query = @$" 
+                        DELETE FROM classrooms WHERE classroom_id = {classroom_id};
+                    ";
+
+                    int rowsAffected = 0;
+                    using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
+                        rowsAffected = mySqlCommand.ExecuteNonQuery();
+                    }
+                    
+                    if(rowsAffected > 0){
+                        _logger.LogInformation("ClassroomController: Deleted!");
+                        // Console.WriteLine("Success!");
+                        return Ok();
+                    }else{
+                        _logger.LogInformation("ClassroomController: Can't Delete Classroom");
+                        return BadRequest();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation("Exception: Delete Classroom | "+ e.ToString());
                 Console.WriteLine(e.ToString());
                 return BadRequest();
             }

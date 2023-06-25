@@ -42,6 +42,7 @@ namespace lms_backend.Controllers
                     String query = @"
                         SELECT * FROM students
                         LEFT JOIN classrooms ON students.classroom_id = classrooms.classroom_id
+                        ORDER BY student_id DESC
                     ";
 
                     using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
@@ -52,7 +53,7 @@ namespace lms_backend.Controllers
                     }
                     
                     string json = _helper.ConvertDataTableToJson(dataTable);
-                    Console.WriteLine(json);
+                    // Console.WriteLine(json);
                     return Content(json, "application/json");
                 }
             }
@@ -91,7 +92,7 @@ namespace lms_backend.Controllers
                     }
                     
                     string json = _helper.ConvertDataTableToJson(dataTable);
-                    Console.WriteLine(json);
+                    // Console.WriteLine(json);
                     return Content(json, "application/json");
                 }
                 
@@ -113,7 +114,6 @@ namespace lms_backend.Controllers
                 DataTable dataTable = new DataTable();
                 string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-                // Console.WriteLine(student);
                 string first_name = _helper.getJsonProperty("first_name", "String", student);
                 string last_name = _helper.getJsonProperty("last_name", "String", student);
                 string contact_person = _helper.getJsonProperty("contact_person", "String", student);
@@ -166,6 +166,45 @@ namespace lms_backend.Controllers
             catch (Exception e)
             {
                 _logger.LogInformation("Exception: Create Student | "+ e.ToString());
+                Console.WriteLine(e.ToString());
+                return BadRequest();
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+             _logger.LogInformation("StudentController: Delete Student");
+            try
+            {
+                DataTable dataTable = new DataTable();
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                int student_id = id;
+                using(_connection) {  
+                    _connection.Open();       
+                    String query = @$" 
+                        DELETE FROM students WHERE student_id = {student_id};
+                    ";
+
+                    int rowsAffected = 0;
+                    using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
+                        rowsAffected = mySqlCommand.ExecuteNonQuery();
+                    }
+                    
+                    if(rowsAffected > 0){
+                        _logger.LogInformation("StudentController: Deleted!");
+                        // Console.WriteLine("Success!");
+                        return Ok();
+                    }else{
+                        _logger.LogInformation("StudentController: Can't Delete Student");
+                        return BadRequest();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation("Exception: Delete Student | "+ e.ToString());
                 Console.WriteLine(e.ToString());
                 return BadRequest();
             }

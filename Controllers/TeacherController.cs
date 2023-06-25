@@ -154,7 +154,7 @@ namespace lms_backend.Controllers
             }
         }
 
-         [HttpDelete("{id}")]
+        [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
              _logger.LogInformation("TeacherController: Delete Teacher");
@@ -193,5 +193,244 @@ namespace lms_backend.Controllers
             }
         }
  
+        [HttpPost("/api/[controller]/subjects")]
+        public IActionResult AllocateSubject([FromBody] dynamic data)
+        {
+            _logger.LogInformation("TeacherController: Allocate Teacher Subjects");
+            try
+            {
+                DataTable dataTable = new DataTable();
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                int subject_id = _helper.getJsonProperty("subject_id", "Int", data);
+                int teacher_id = _helper.getJsonProperty("teacher_id", "Int", data);
+             
+                using(_connection) {  
+                    _connection.Open();       
+                    String query = @$" 
+                        Insert Into teacher_subject(teacher_id, subject_id)
+                        Values('{teacher_id}', '{subject_id}');
+                    ";
+
+                    int rowsAffected = 0;
+                    using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
+                        rowsAffected = mySqlCommand.ExecuteNonQuery();
+                    }
+                    
+                    if(rowsAffected > 0){
+                        _logger.LogInformation("TeacherController: Teacher Subject Allocated!");
+                        // Console.WriteLine("Success!");
+                        return Ok();
+                    }else{
+                        _logger.LogInformation("TeacherController: Can't Allocate Subject to Teacher");
+                        return BadRequest();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation("Exception: Allocate Subject Teacher | "+ e.ToString());
+                Console.WriteLine(e.ToString());
+                return BadRequest();
+            }
+        }
+
+        [HttpDelete("/api/[controller]/subjects/{teacher_id}/{subject_id}")]
+        public IActionResult DeallocateSubject(int teacher_id, int subject_id)
+        {
+            _logger.LogInformation("TeacherController: Deallocate Teacher Subjects");
+            try
+            {
+                DataTable dataTable = new DataTable();
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                using(_connection) {  
+                    _connection.Open();       
+                    String query = @$" 
+                        DELETE FROM teacher_subject
+                        WHERE teacher_id = '{teacher_id}' AND subject_id = '{subject_id}'
+                    ";
+
+                    int rowsAffected = 0;
+                    using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
+                        rowsAffected = mySqlCommand.ExecuteNonQuery();
+                    }
+                    
+                    if(rowsAffected > 0){
+                        _logger.LogInformation("TeacherController: Teacher Subject Deallocated!");
+                        // Console.WriteLine("Success!");
+                        return Ok();
+                    }else{
+                        _logger.LogInformation("TeacherController: Can't Deallocate Subject to Teacher");
+                        return BadRequest();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation("Exception: Deallocate Subject Teacher | "+ e.ToString());
+                Console.WriteLine(e.ToString());
+                return BadRequest();
+            }
+        }
+
+        [HttpGet("/api/[controller]/{id}/subjects")]
+        public IActionResult GetAllocatedSubjects(string id)
+        {
+            _logger.LogInformation("TeacherController:Get Teacher Subjects by ID");
+            try
+            {
+                DataTable dataTable = new DataTable();
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+                MySqlDataReader mySqlDataReader;
+                
+                using(_connection) {  
+                    _connection.Open();       
+                    String query = @$"
+                        SELECT * FROM teacher_subject
+                        LEFT JOIN subjects ON teacher_subject.subject_id = subjects.subject_id
+                        WHERE teacher_subject.teacher_id = {id}
+                    ";
+
+                    using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
+                        mySqlDataReader = mySqlCommand.ExecuteReader();
+                        dataTable.Load(mySqlDataReader);
+                        mySqlDataReader.Close();
+                        _connection.Close();
+                    }
+                    
+                    string json = _helper.ConvertDataTableToJson(dataTable);
+                    return Content(json, "application/json");
+                }
+                
+            }
+            catch (Exception e)
+            {
+                 _logger.LogInformation("Exception: Get Teacher Subjects By ID | "+ e.ToString());
+                Console.WriteLine(e.ToString());
+                return BadRequest();
+            }
+        }
+
+        [HttpGet("/api/[controller]/{id}/classrooms")]
+        public IActionResult GetAllocatedClassrooms(string id)
+        {
+            _logger.LogInformation("TeacherController:Get Teacher Classrooms by ID");
+            try
+            {
+                DataTable dataTable = new DataTable();
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+                MySqlDataReader mySqlDataReader;
+                
+                using(_connection) {  
+                    _connection.Open();       
+                    String query = @$"
+                        SELECT * FROM teacher_classroom
+                        LEFT JOIN classrooms ON teacher_classroom.classroom_id = classrooms.classroom_id
+                        WHERE teacher_classroom.teacher_id = {id}
+                    ";
+
+                    using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
+                        mySqlDataReader = mySqlCommand.ExecuteReader();
+                        dataTable.Load(mySqlDataReader);
+                        mySqlDataReader.Close();
+                        _connection.Close();
+                    }
+                    
+                    string json = _helper.ConvertDataTableToJson(dataTable);
+                    return Content(json, "application/json");
+                }
+                
+            }
+            catch (Exception e)
+            {
+                 _logger.LogInformation("Exception: Get Teacher Classrooms By ID | "+ e.ToString());
+                Console.WriteLine(e.ToString());
+                return BadRequest();
+            }
+        }
+
+        [HttpPost("/api/[controller]/classrooms")]
+        public IActionResult AllocateClassroom([FromBody] dynamic data)
+        {
+            _logger.LogInformation("TeacherController: Allocate Teacher Classroom");
+            try
+            {
+                DataTable dataTable = new DataTable();
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                int classroom_id = _helper.getJsonProperty("classroom_id", "Int", data);
+                int teacher_id = _helper.getJsonProperty("teacher_id", "Int", data);
+             
+                using(_connection) {  
+                    _connection.Open();       
+                    String query = @$" 
+                        Insert Into teacher_classroom(teacher_id, classroom_id)
+                        Values('{teacher_id}', '{classroom_id}');
+                    ";
+
+                    int rowsAffected = 0;
+                    using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
+                        rowsAffected = mySqlCommand.ExecuteNonQuery();
+                    }
+                    
+                    if(rowsAffected > 0){
+                        _logger.LogInformation("TeacherController: Teacher Classroom Allocated!");
+                        // Console.WriteLine("Success!");
+                        return Ok();
+                    }else{
+                        _logger.LogInformation("TeacherController: Can't Allocate Classroom to Teacher");
+                        return BadRequest();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation("Exception: Allocate Subject Teacher | "+ e.ToString());
+                Console.WriteLine(e.ToString());
+                return BadRequest();
+            }
+        }
+
+        [HttpDelete("/api/[controller]/classrooms/{teacher_id}/{classroom_id}")]
+        public IActionResult DeallocateClassroom(int teacher_id, int classroom_id)
+        {
+            _logger.LogInformation("TeacherController: Deallocate Teacher Classroom");
+            try
+            {
+                DataTable dataTable = new DataTable();
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                using(_connection) {  
+                    _connection.Open();       
+                    String query = @$" 
+                        DELETE FROM teacher_classroom
+                        WHERE teacher_id = '{teacher_id}' AND classroom_id = '{classroom_id}'
+                    ";
+
+                    int rowsAffected = 0;
+                    using(MySqlCommand mySqlCommand = new MySqlCommand(query, _connection)){
+                        rowsAffected = mySqlCommand.ExecuteNonQuery();
+                    }
+                    
+                    if(rowsAffected > 0){
+                        _logger.LogInformation("TeacherController: Teacher Subject Deallocated!");
+                        // Console.WriteLine("Success!");
+                        return Ok();
+                    }else{
+                        _logger.LogInformation("TeacherController: Can't Deallocate Classroom from Teacher");
+                        return BadRequest();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation("Exception: Deallocate Classroom Teacher | "+ e.ToString());
+                Console.WriteLine(e.ToString());
+                return BadRequest();
+            }
+        }
+
     }
+
 }
